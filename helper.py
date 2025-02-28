@@ -2,46 +2,33 @@ import argparse
 from PIL import Image, ImageDraw
 import numpy as np
 from torchvision import transforms
+from types import SimpleNamespace
 
 def get_opt():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--name', type=str, required=True)
-
-    parser.add_argument('-b', '--batch_size', type=int, default=1)
-    parser.add_argument('-j', '--workers', type=int, default=1)
-    parser.add_argument('--load_height', type=int, default=1024)
-    parser.add_argument('--load_width', type=int, default=768)
-    parser.add_argument('--shuffle', action='store_true')
-
-    parser.add_argument('--dataset_dir', type=str, default='./datasets/')
-    parser.add_argument('--dataset_mode', type=str, default='test')
-    parser.add_argument('--dataset_list', type=str, default='test_pairs.txt')
-    parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints/')
-    parser.add_argument('--save_dir', type=str, default='./results/')
-
-    parser.add_argument('--display_freq', type=int, default=1)
-
-    parser.add_argument('--seg_checkpoint', type=str, default='seg_final.pth')
-    parser.add_argument('--gmm_checkpoint', type=str, default='gmm_final.pth')
-    parser.add_argument('--alias_checkpoint', type=str, default='alias_final.pth')
-
-    # common
-    parser.add_argument('--semantic_nc', type=int, default=13, help='# of human-parsing map classes')
-    parser.add_argument('--init_type', choices=['normal', 'xavier', 'xavier_uniform', 'kaiming', 'orthogonal', 'none'], default='xavier')
-    parser.add_argument('--init_variance', type=float, default=0.02, help='variance of the initialization distribution')
-
-    # for GMM
-    parser.add_argument('--grid_size', type=int, default=5)
-
-    # for ALIASGenerator
-    parser.add_argument('--norm_G', type=str, default='spectralaliasinstance')
-    parser.add_argument('--ngf', type=int, default=64, help='# of generator filters in the first conv layer')
-    parser.add_argument('--num_upsampling_layers', choices=['normal', 'more', 'most'], default='most',
-                        help='If \'more\', add upsampling layer between the two middle resnet blocks. '
-                             'If \'most\', also add one more (upsampling + resnet) layer at the end of the generator.')
-
-    opt = parser.parse_args()
-    return opt
+    return SimpleNamespace(
+        name="data",
+        batch_size=1,
+        workers=1,
+        load_height=1024,
+        load_width=768,
+        shuffle=False,
+        dataset_dir="./datasets/",
+        dataset_mode="test",
+        dataset_list="test_pairs.txt",
+        checkpoint_dir="./checkpoints/",
+        save_dir="./results/",
+        display_freq=1,
+        seg_checkpoint="seg_final.pth",
+        gmm_checkpoint="gmm_final.pth",
+        alias_checkpoint="alias_final.pth",
+        semantic_nc=13,
+        init_type="xavier",
+        init_variance=0.02,
+        grid_size=5,
+        norm_G="spectralaliasinstance",
+        ngf=64,
+        num_upsampling_layers="most"
+    )
 
 #PARSE AGNOSTIC
 def get_parse_agnostic( parse, pose_data):
