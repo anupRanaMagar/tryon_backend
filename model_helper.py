@@ -51,8 +51,6 @@ def clothes_deformation(img_agnostic, parse, pose_rgb,gmm,cm,c):
 
     _, warped_grid = gmm(gmm_input, c_gmm)
     c= c.unsqueeze(0)
-    print("WARPED GRID",warped_grid.size())
-    print("C shape:", c.size())
     cm = cm.unsqueeze(0)
     warped_c = F.grid_sample(c, warped_grid, padding_mode='border')
     warped_cm = F.grid_sample(cm, warped_grid, padding_mode='border')
@@ -79,7 +77,6 @@ def try_on_synthesis(parse, pose_rgb, warped_c, img_agnostic, alias, warped_cm):
     elif array.shape[0] == 3:
         array = array.swapaxes(0, 1).swapaxes(1, 2)
 
-    print("ARRAY SHAPE", array.shape)
     array = array.transpose(1, 2, 0)
     im = Image.fromarray(array)
     return im

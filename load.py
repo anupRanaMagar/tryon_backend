@@ -5,9 +5,15 @@ import torch
 import numpy as np
 from helper import get_parse_agnostic,get_img_agnostic,transform
 
+def convert_to_grayscale(image_array):
+    if len(image_array.shape) == 3 and image_array.shape[2] == 3:
+        return np.mean(image_array, axis=2)  # Convert RGB to grayscale by averaging channels
+    return image_array 
+
 def load_data(openpose_img, openpose_json, image_parse,cloth, cloth_mask,image):
     pose_rgb = Image.open(openpose_img)
-    pose_rgb =transforms.Resize(768, interpolation=2)(pose_rgb)
+    pose_rgb = transforms.Resize((1024, 768), interpolation=Image.BILINEAR)(pose_rgb)
+    # pose_rgb =transforms.Resize(768, interpolation=2)(pose_rgb)
     pose_rgb = transform(pose_rgb)
 
     with open(openpose_json, 'r') as f:
@@ -18,6 +24,7 @@ def load_data(openpose_img, openpose_json, image_parse,cloth, cloth_mask,image):
 
     #load parsing image
     parse = Image.open(image_parse)
+    parse = parse.convert("P")
     parse = transforms.Resize((1024, 768), interpolation=Image.NEAREST)(parse)
     # parse = transforms.Resize(768, interpolation=0)(parse)
     parse_agnostic = get_parse_agnostic(parse, pose_data)
@@ -55,10 +62,12 @@ def load_data(openpose_img, openpose_json, image_parse,cloth, cloth_mask,image):
     img_agnostic = transform(img_agnostic)
 
 
-    c = Image.open(cloth).convert('RGB')
+    # c = Image.open(cloth).convert('RGB')
+    c = cloth.convert('RGB')
     c = c.resize((768,1024), Image.BICUBIC)
     c = transforms.Resize(768, interpolation=2)(c)
-    cm = Image.open(cloth_mask)
+    # cm = Image.open(cloth_mask)
+    cm = cloth_mask
     cm = transforms.Resize(768, interpolation=0)(cm)
 
 

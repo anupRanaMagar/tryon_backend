@@ -17,8 +17,8 @@ class BaseNetwork(nn.Module):
         num_params = 0
         for param in self.parameters():
             num_params += param.numel()
-        print("Network [{}] was created. Total number of parameters: {:.1f} million. "
-              "To see the architecture, do print(network).".format(self.__class__.__name__, num_params / 1000000))
+        # print("Network [{}] was created. Total number of parameters: {:.1f} million. "
+        #       "To see the architecture, do print(network).".format(self.__class__.__name__, num_params / 1000000))
 
     def init_weights(self, init_type='normal', gain=0.02):
         def init_func(m):
@@ -99,7 +99,7 @@ class SegGenerator(BaseNetwork):
         self.drop = nn.Dropout(0.5)
         self.sigmoid = nn.Sigmoid()
 
-        self.print_network()
+        # self.print_network()
         self.init_weights(opt.init_type, opt.init_variance)
 
     def forward(self, x):
@@ -481,7 +481,7 @@ class ALIASGenerator(BaseNetwork):
         self.relu = nn.LeakyReLU(0.2)
         self.tanh = nn.Tanh()
 
-        self.print_network()
+        # self.print_network()
         self.init_weights(opt.init_type, opt.init_variance)
 
     def compute_latent_vector_size(self, opt):

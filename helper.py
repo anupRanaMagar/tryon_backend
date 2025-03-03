@@ -1,8 +1,14 @@
-import argparse
+import os
+from fastapi import HTTPException
 from PIL import Image, ImageDraw
 import numpy as np
 from torchvision import transforms
 from types import SimpleNamespace
+
+def convert_to_grayscale(image_array):
+    if len(image_array.shape) == 3 and image_array.shape[2] == 3:
+        return np.mean(image_array, axis=2)  # Convert RGB to grayscale by averaging channels
+    return image_array 
 
 def get_opt():
     return SimpleNamespace(
@@ -33,6 +39,7 @@ def get_opt():
 #PARSE AGNOSTIC
 def get_parse_agnostic( parse, pose_data):
     parse_array = np.array(parse)
+    # parse_array = convert_to_grayscale(parse_array)
     parse_upper = ((parse_array == 5).astype(np.float32) +
                     (parse_array == 6).astype(np.float32) +
                     (parse_array == 7).astype(np.float32))
@@ -53,8 +60,23 @@ def get_parse_agnostic( parse, pose_data):
             pointx, pointy = pose_data[i]
             radius = r*4 if i == pose_ids[-1] else r*15
             mask_arm_draw.ellipse((pointx-radius, pointy-radius, pointx+radius, pointy+radius), 'white', 'white')
-            i_prev = i
-        parse_arm = (np.array(mask_arm) / 255) * (parse_array == parse_id).astype(np.float32)
+            i_prev = i   
+        # parse_arm = (np.array(mask_arm) / 255) * (parse_array == parse_id).astype(np.float32)
+        mask_arm_np = np.array(mask_arm)
+
+        # Convert mask_arm to grayscale if it has 3 channels
+        if len(mask_arm_np.shape) == 3 and mask_arm_np.shape[2] == 3:
+            mask_arm_np = np.mean(mask_arm_np, axis=2)  # Convert RGB to grayscale
+
+        mask_arm_np = mask_arm_np / 255  # Normalize
+
+        # Ensure parse_array is single-channel
+        parse_mask = (parse_array == parse_id).astype(np.float32)
+        if len(parse_mask.shape) == 3:
+            parse_mask = parse_mask[:, :, 0]  # Take only one channel
+
+        # Now both arrays have shape (1024, 768)
+        parse_arm = mask_arm_np * parse_mask
         agnostic.paste(0, None, Image.fromarray(np.uint8(parse_arm * 255), 'L'))
 
     # mask torso & neck
@@ -120,3 +142,41 @@ transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
+
+def get_image_paths(human_filename: str) -> tuple[str, str, str, str]:
+    # Define base directories
+    base_image_dir = "datasets/test/image"
+    image_path = os.path.join(base_image_dir, human_filename)
+    
+    # Check if the human image exists in the dataset
+    if not os.path.exists(image_path):
+        raise HTTPException(
+            400,
+            detail=f"Human image {human_filename} not found in dataset"
+        )
+    
+    # Generate related file paths
+    image = image_path
+    image_parse = os.path.join(
+        "datasets/test/image-parse",
+        f"{human_filename.split('.')[0]}.png"
+    )
+    openpose_img = os.path.join(
+        "datasets/test/openpose-img",
+        f"{human_filename.split('.')[0]}_rendered.png"
+    )
+    openpose_json = os.path.join(
+        "datasets/test/openpose-json",
+        f"{human_filename.split('.')[0]}_keypoints.json"
+    )
+    
+    # Verify all required files exist
+    required_files = [image_parse, openpose_img, openpose_json]
+    for file_path in required_files:
+        if not os.path.exists(file_path):
+            raise HTTPException(
+                400,
+                detail=f"Required preprocessing file not found: {file_path}"
+            )
+    
+    return image, image_parse, openpose_img, openpose_json
